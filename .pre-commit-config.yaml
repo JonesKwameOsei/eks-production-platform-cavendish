@@ -75,7 +75,7 @@ repos:
     hooks:
       - id: helm-template-validate
         name: "⎈ Helm — Template render check"
-        entry: bash -c 'cd chart && helm template . -f values.yaml -f values.staging.yaml > /dev/null 2>&1 && helm template . -f values.yaml -f values.production.yaml > /dev/null 2>&1'
+        entry: bash -c 'cd chart && helm template . -f values.yaml -f values.staging.yaml > /dev/null 2>&1 && helm template . -f values.yaml -f values.uat.yaml > /dev/null 2>&1 && helm template . -f values.yaml -f values.production.yaml > /dev/null 2>&1'
         language: system
         pass_filenames: false
         files: "chart/.*\\.(yaml|yml|tpl)$"
