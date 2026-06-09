@@ -1,0 +1,58 @@
+# =============================================================================
+# CODEOWNERS — eks-production-platform-cavendish
+# =============================================================================
+# This file defines code ownership for automated PR review assignment.
+# Each line is a file pattern followed by one or more owners.
+# Order matters — later rules override earlier ones.
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# DEFAULT — Project Lead (you) owns everything by default
+# -----------------------------------------------------------------------------
+*                                   @jonesPlatformLead
+
+# -----------------------------------------------------------------------------
+# INFRASTRUCTURE — Platform/DevOps Engineers
+# -----------------------------------------------------------------------------
+/terraform/                         @jonesPlatformLead @aisha-devops @kwame-cloud
+/argocd/                            @jonesPlatformLead @aisha-devops
+/velero/                            @jonesPlatformLead @aisha-devops
+
+# -----------------------------------------------------------------------------
+# HELM CHART — Platform + Backend Engineers
+# -----------------------------------------------------------------------------
+/chart/                             @jonesPlatformLead @aisha-devops @daniel-backend
+/chart/values.production.yaml       @jonesPlatformLead
+/chart/values.uat.yaml              @jonesPlatformLead @aisha-devops
+
+# -----------------------------------------------------------------------------
+# APPLICATION — Backend Engineers
+# -----------------------------------------------------------------------------
+/app/                               @daniel-backend @priya-backend @jonesPlatformLead
+
+# -----------------------------------------------------------------------------
+# OBSERVABILITY — SRE / Platform Engineers
+# -----------------------------------------------------------------------------
+/monitoring/                        @jonesPlatformLead @aisha-devops @kwame-cloud
+
+# -----------------------------------------------------------------------------
+# CI/CD PIPELINES — Platform Lead + DevOps
+# -----------------------------------------------------------------------------
+/.github/workflows/                 @jonesPlatformLead @aisha-devops
+
+# -----------------------------------------------------------------------------
+# SECURITY-SENSITIVE FILES — Platform Lead only
+# -----------------------------------------------------------------------------
+/.pre-commit-config.yaml            @jonesPlatformLead
+/.tflint.hcl                        @jonesPlatformLead
+/.kube-linter.yaml                  @jonesPlatformLead
+/.github/CODEOWNERS                 @jonesPlatformLead
+/.gitignore                         @jonesPlatformLead
+
+# -----------------------------------------------------------------------------
+# DOCUMENTATION — Any team member can contribute, lead reviews
+# -----------------------------------------------------------------------------
+/docs/                              @jonesPlatformLead @aisha-devops @daniel-backend
+/README.md                          @jonesPlatformLead
