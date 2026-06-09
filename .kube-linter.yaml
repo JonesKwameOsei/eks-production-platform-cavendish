@@ -1,0 +1,16 @@
+# =============================================================================
+# KubeLinter Configuration — Kubernetes Manifest Security & Best Practices
+# =============================================================================
+
+checks:
+  addAllBuiltIn: true
+  exclude:
+    # Exclude checks that conflict with our Helm templating patterns
+    - "unset-cpu-requirements"  # We intentionally omit CPU limits (use requests only)
+
+customChecks: []
+
+# Paths to ignore (generated files, test fixtures)
+ignorePaths:
+  - "test/**"
+  - "**/*_test.yaml"

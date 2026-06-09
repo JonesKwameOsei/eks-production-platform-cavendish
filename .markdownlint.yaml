@@ -1,0 +1,25 @@
+# =============================================================================
+# Markdownlint Configuration — Documentation Standards
+# =============================================================================
+
+# Default state for all rules
+default: true
+
+# Allow long lines (documentation often has long URLs and tables)
+MD013:
+  line_length: 200
+  tables: false
+
+# Allow inline HTML (useful for badges in README)
+MD033: false
+
+# Allow multiple headings with same content (common in changelogs)
+MD024:
+  siblings_only: true
+
+# Allow trailing punctuation in headings (question marks in FAQ)
+MD026:
+  punctuation: ".,;:!"
+
+# First line doesn't have to be a heading
+MD041: false

@@ -1,0 +1,239 @@
+# =============================================================================
+# Pre-Commit Framework — Production-Grade EKS Platform Engineering
+# =============================================================================
+# Catches bugs early across: Terraform, Kubernetes/Helm, Docker, Python,
+# GitHub Actions, Shell scripts, YAML/JSON, and secrets.
+#
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+#   pre-commit run --all-files  (initial run)
+#
+# =============================================================================
+
+repos:
+  # ===========================================================================
+  # 1. SECRETS DETECTION — Prevent credentials from ever reaching Git
+  # ===========================================================================
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        name: "🔐 Gitleaks — Detect hardcoded secrets"
+        description: "Scans for AWS keys, tokens, passwords, and other secrets"
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: "🔐 Detect-Secrets — Baseline secret scanning"
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: "package-lock.json|.secrets.baseline"
+
+  # ===========================================================================
+  # 2. TERRAFORM — IaC validation, formatting, security scanning
+  # ===========================================================================
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      - id: terraform_fmt
+        name: "🏗️  Terraform — Format check"
+        description: "Ensures consistent Terraform formatting"
+
+      - id: terraform_validate
+        name: "🏗️  Terraform — Validate configuration"
+        description: "Validates Terraform syntax and internal consistency"
+
+      - id: terraform_tflint
+        name: "🏗️  Terraform — TFLint static analysis"
+        description: "Catches deprecated syntax, unused variables, naming conventions"
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+
+      - id: terraform_tfsec
+        name: "🏗️  Terraform — tfsec security scanner"
+        description: "Identifies security misconfigurations in Terraform code"
+
+      - id: terraform_checkov
+        name: "🏗️  Terraform — Checkov policy-as-code"
+        description: "CIS benchmarks and security best practices for cloud resources"
+        args:
+          - --args=--quiet
+          - --args=--compact
+
+  # ===========================================================================
+  # 3. KUBERNETES / HELM — Manifest validation, linting, security
+  # ===========================================================================
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.23
+    hooks:
+      - id: helmlint
+        name: "⎈ Helm — Lint chart"
+        description: "Validates Helm chart structure and templates"
+
+  - repo: local
+    hooks:
+      - id: helm-template-validate
+        name: "⎈ Helm — Template render check"
+        entry: bash -c 'cd chart && helm template . -f values.yaml -f values.staging.yaml > /dev/null 2>&1 && helm template . -f values.yaml -f values.production.yaml > /dev/null 2>&1'
+        language: system
+        pass_filenames: false
+        files: "chart/.*\\.(yaml|yml|tpl)$"
+        description: "Ensures Helm templates render without errors for all environments"
+
+  - repo: https://github.com/stackrox/kube-linter
+    rev: v0.6.8
+    hooks:
+      - id: kube-linter
+        name: "⎈ KubeLinter — K8s best practices"
+        description: "Checks Kubernetes manifests for security and production readiness"
+        args:
+          - --config=.kube-linter.yaml
+        types: [yaml]
+        files: "(chart/templates/|phase0/|argocd/|velero/|monitoring/).*\\.yaml$"
+
+  # ===========================================================================
+  # 4. DOCKER — Dockerfile linting and security
+  # ===========================================================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: "🐳 Hadolint — Dockerfile best practices"
+        description: "Lints Dockerfiles for security and efficiency issues"
+        args:
+          - --ignore=DL3008  # Pin versions in apt-get (allow for base images)
+          - --ignore=DL3013  # Pin pip versions
+
+  # ===========================================================================
+  # 5. PYTHON — FastAPI Analytics API code quality
+  # ===========================================================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        name: "🐍 Ruff — Python linting (fast)"
+        description: "Catches Python bugs, style issues, and security anti-patterns"
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+
+      - id: ruff-format
+        name: "🐍 Ruff — Python formatting"
+        description: "Consistent Python code style"
+        types_or: [python, pyi]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        name: "🐍 Mypy — Python type checking"
+        description: "Catches type errors before runtime"
+        additional_dependencies: [fastapi, pydantic]
+        files: "app/.*\\.py$"
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: "1.7.10"
+    hooks:
+      - id: bandit
+        name: "🐍 Bandit — Python security linter"
+        description: "Finds common security issues in Python code"
+        args: ["-c", "pyproject.toml", "-r", "app/"]
+        additional_dependencies: ["bandit[toml]"]
+        pass_filenames: false
+
+  # ===========================================================================
+  # 6. YAML / JSON — Syntax validation
+  # ===========================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+        name: "📄 YAML — Syntax check"
+        description: "Validates YAML syntax"
+        args: [--allow-multiple-documents, --unsafe]
+        exclude: "chart/templates/"  # Helm templates have Go templating
+
+      - id: check-json
+        name: "📄 JSON — Syntax check"
+        description: "Validates JSON syntax"
+
+      - id: check-merge-conflict
+        name: "⚠️  Check for merge conflict markers"
+
+      - id: end-of-file-fixer
+        name: "📄 Fix end of file"
+
+      - id: trailing-whitespace
+        name: "📄 Trim trailing whitespace"
+        args: [--markdown-linebreak-ext=md]
+
+      - id: check-added-large-files
+        name: "📦 Block large file commits"
+        args: [--maxkb=1024]
+        description: "Prevents accidentally committing large binaries"
+
+      - id: no-commit-to-branch
+        name: "🚫 Block direct commits to main"
+        args: [--branch, main, --branch, master]
+        description: "Enforces branch-based workflow"
+
+      - id: check-symlinks
+        name: "🔗 Check symlinks"
+
+      - id: check-executables-have-shebangs
+        name: "📜 Executables have shebangs"
+
+  # ===========================================================================
+  # 7. SHELL SCRIPTS — Linting and security
+  # ===========================================================================
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: "🐚 ShellCheck — Shell script analysis"
+        description: "Catches common shell script bugs and security issues"
+        types: [shell]
+
+  # ===========================================================================
+  # 8. GITHUB ACTIONS — Workflow validation
+  # ===========================================================================
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.3
+    hooks:
+      - id: actionlint
+        name: "🔄 ActionLint — GitHub Actions workflow validation"
+        description: "Validates GitHub Actions workflow syntax and best practices"
+
+  # ===========================================================================
+  # 9. MARKDOWN — Documentation quality
+  # ===========================================================================
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.42.0
+    hooks:
+      - id: markdownlint-fix
+        name: "📝 Markdownlint — Documentation formatting"
+        description: "Consistent markdown style across documentation"
+        args: [--config, .markdownlint.yaml]
+
+  # ===========================================================================
+  # 10. COMMIT MESSAGE — Conventional commits enforcement
+  # ===========================================================================
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+      - id: conventional-pre-commit
+        name: "💬 Conventional Commits — Message format"
+        description: "Enforces conventional commit message format"
+        stages: [commit-msg]
+        args:
+          - feat
+          - fix
+          - docs
+          - style
+          - refactor
+          - perf
+          - test
+          - build
+          - ci
+          - chore
+          - revert
