@@ -1,1 +1,85 @@
+# =============================================================================
+# .gitignore — EKS Production Platform
+# =============================================================================
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# AWS
+.aws/
+*.pem
+*.key
+
+# Secrets & Credentials
+.env
+.env.*
+*.env
+secrets/
+.secrets.baseline
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Helm
+chart/charts/
+*.tgz
+
+# Node (if any tooling needs it)
+node_modules/
+
+# OS
+.DS_Store
+*.swp
+*.bak
+*.tmp
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+
 project/
