@@ -1,0 +1,51 @@
+name: PR Label Enforcement
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
+
+jobs:
+  check-labels:
+    name: Validate PR Labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for required type label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+
+            const typeLabels = labels.filter(l => l.startsWith('type:'));
+            const priorityLabels = labels.filter(l => l.startsWith('priority:'));
+
+            const errors = [];
+
+            if (typeLabels.length === 0) {
+              errors.push('❌ Missing required `type:` label. Add one of: type: feature, type: fix, type: docs, type: chore, type: ci, type: security, type: refactor');
+            }
+
+            if (priorityLabels.length === 0) {
+              errors.push('❌ Missing required `priority:` label. Add one of: priority: critical, priority: high, priority: medium, priority: low');
+            }
+
+            if (errors.length > 0) {
+              const message = [
+                '## ⚠️ PR Label Check Failed',
+                '',
+                'This PR is missing required labels:',
+                '',
+                ...errors,
+                '',
+                '### How to fix',
+                '1. Click the ⚙️ gear icon next to "Labels" in the PR sidebar',
+                '2. Add at least one `type:` label and one `priority:` label',
+                '',
+                'See [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md#pull-request-labels) for the full list of labels.'
+              ].join('\n');
+
+              core.setFailed(message);
+            } else {
+              console.log('✅ All required labels present:');
+              console.log(`   Type: ${typeLabels.join(', ')}`);
+              console.log(`   Priority: ${priorityLabels.join(', ')}`);
+            }
