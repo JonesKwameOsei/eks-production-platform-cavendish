@@ -1,0 +1,44 @@
+name: Pre-Commit Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  pre-commit:
+    name: Run Pre-Commit Hooks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: "v3.15.0"
+
+      - name: Install TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: "v0.52.0"
+
+      - name: Initialize TFLint plugins
+        run: |
+          if [ -d "terraform" ]; then
+            cd terraform && tflint --init || true
+          fi
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --all-files --show-diff-on-failure
