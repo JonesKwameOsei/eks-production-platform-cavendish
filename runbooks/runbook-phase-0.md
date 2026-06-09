@@ -2,11 +2,13 @@
 
 ## Overview
 
-Phase 0 builds the manual reverse proxy and TLS stack on k3s over 3 days. Every component you configure here has a direct EKS equivalent — doing it manually first means you understand what the automation is hiding.
+Phase 0 builds the manual reverse proxy and TLS stack on k3s over 3 days.
+Every component you configure here has a direct EKS equivalent — doing it manually first means you understand what the automation is hiding.
 
 **Outcome**: A fully working HTTPS endpoint on a free subdomain, with IP whitelisting and a demonstrated decommission pattern.
 
 **Prerequisites**:
+
 - AWS account (Free Tier eligible)
 - SSH client
 - Basic kubectl knowledge
@@ -40,6 +42,7 @@ Phase 0 builds the manual reverse proxy and TLS stack on k3s over 3 days. Every 
 4. Note your **Public IPv4 address** — you'll need it for DNS.
 
 5. SSH into the instance:
+
    ```bash
    chmod 400 phase0-key.pem
    ssh -i phase0-key.pem ubuntu@<YOUR_EC2_PUBLIC_IP>
@@ -74,12 +77,14 @@ kubectl get nodes
 ```
 
 **Expected output**:
-```
+
+```bash
 NAME          STATUS   ROLES                  AGE   VERSION
 ip-x-x-x-x   Ready    control-plane,master   30s   v1.29.x+k3s1
 ```
 
 **Verify Traefik is NOT running**:
+
 ```bash
 kubectl get pods -n kube-system | grep traefik
 # Should return nothing
@@ -102,7 +107,8 @@ helm version
 ```
 
 **Expected output**:
-```
+
+```bash
 version.BuildInfo{Version:"v3.x.x", ...}
 ```
 
@@ -125,37 +131,45 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --set controller.hostNetwork=true
 ```
 
-> **Why `hostNetwork: true`?** On a single-node k3s cluster, we need the Ingress Controller to bind directly to the host's port 80/443. On EKS, the AWS Load Balancer Controller handles this by provisioning an ALB instead.
+> **Why `hostNetwork: true`?** On a single-node k3s cluster, we need the Ingress
+> Controller to bind directly to the host's port 80/443. On EKS, the AWS Load Balancer
+> Controller handles this by provisioning an ALB instead.
 
 **Verify the Ingress Controller is running**:
+
 ```bash
 kubectl get pods -n ingress-nginx
 ```
 
 **Expected output**:
-```
+
+```bash
 NAME                                        READY   STATUS    RESTARTS   AGE
 ingress-nginx-controller-xxxxxxxxx-xxxxx    1/1     Running   0          60s
 ```
 
 **Verify the IngressClass is registered**:
+
 ```bash
 kubectl get ingressclass
 ```
 
 **Expected output**:
-```
+
+```bash
 NAME    CONTROLLER                      PARAMETERS   AGE
 nginx   k8s.io/ingress-nginx            <none>       60s
 ```
 
-> **Understanding**: The IngressClass tells Kubernetes which controller handles a given Ingress resource. On EKS, this will be `alb` instead of `nginx`. The concept is identical — only the controller changes.
+> **Understanding**: The IngressClass tells Kubernetes which controller handles a given Ingress resource.
+> On EKS, this will be `alb` instead of `nginx`. The concept is identical — only the controller changes.
 
 ---
 
 ### Step 5: Register a Free DNS Subdomain (FreeDNS)
 
 You need a real domain name pointing to your EC2 IP so that:
+
 - HTTP routing by hostname works
 - Let's Encrypt can issue a certificate (Day 2)
 
@@ -172,6 +186,7 @@ You need a real domain name pointing to your EC2 IP so that:
 Your subdomain will be something like: `api.yourname.mooo.com`
 
 **Verify DNS is resolving** (may take 1–5 minutes):
+
 ```bash
 # From your local machine or the EC2 instance
 nslookup api.yourname.mooo.com
@@ -204,13 +219,15 @@ kubectl get svc http-echo
 ```
 
 **Expected output** (pods):
-```
+
+```bash
 NAME                        READY   STATUS    RESTARTS   AGE
 http-echo-xxxxxxxxx-xxxxx   1/1     Running   0          30s
 ```
 
 **Expected output** (service):
-```
+
+```bash
 NAME        TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
 http-echo   ClusterIP   10.43.x.x     <none>        80/TCP    10s
 ```
@@ -250,28 +267,34 @@ EOF
 > **Replace** `api.yourname.mooo.com` with your actual FreeDNS subdomain.
 
 **Verify the Ingress was created**:
+
 ```bash
 kubectl get ingress
 ```
 
 **Expected output**:
-```
+
+```bash
 NAME                CLASS   HOSTS                      ADDRESS        PORTS   AGE
 http-echo-ingress   nginx   api.yourname.mooo.com      <EC2_IP>       80      10s
 ```
 
 **Examine it in detail**:
+
 ```bash
 kubectl describe ingress http-echo-ingress
 ```
 
 This shows:
+
 - The Host rule
 - The backend service and port
 - The IngressClass being used
 - Events from the Nginx controller picking up the resource
 
-> **Understanding**: This Ingress resource is a *declaration* — "route traffic for this hostname to this service." The Nginx Ingress Controller *watches* for these resources and translates them into actual Nginx config. On EKS, the AWS Load Balancer Controller watches for the same resources but creates ALB listener rules instead.
+> **Understanding**: This Ingress resource is a *declaration* — "route traffic for this hostname to this service."
+> The Nginx Ingress Controller *watches* for these resources and translates them into actual Nginx config.
+> On EKS, the AWS Load Balancer Controller watches for the same resources but creates ALB listener rules instead.
 
 ---
 
@@ -283,19 +306,21 @@ curl http://api.yourname.mooo.com
 ```
 
 **Expected output**:
-```
+
+```bash
 Phase 0 - Day 1: Ingress is working!
 ```
 
 If it works, congratulations — traffic is flowing:
-```
+
+```bash
 Browser/curl → DNS → EC2 public IP:80 → Nginx Ingress Controller → http-echo Pod
 ```
 
 **Troubleshooting** (if curl fails):
 
 | Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
+| --------- | ------------- | ----- |
 | `Connection refused` | EC2 security group not open on port 80 | Add inbound rule: HTTP (80) from 0.0.0.0/0 |
 | `Connection timed out` | DNS not resolved or wrong IP | Run `dig api.yourname.mooo.com` — check IP matches EC2 |
 | `404 Not Found` | Ingress host doesn't match request | Check `host:` in Ingress matches your subdomain exactly |
@@ -334,7 +359,7 @@ cat ~/phase0-day1-evidence.txt
 ### Day 1 — Deliverable Checklist (P0-D1)
 
 | # | Check | Command | Expected |
-|---|-------|---------|----------|
+| --- | ------- | --------- | ---------- |
 | 1 | k3s node is Ready | `kubectl get nodes` | STATUS: Ready |
 | 2 | Traefik is NOT running | `kubectl get pods -n kube-system \| grep traefik` | No output |
 | 3 | Nginx Ingress Controller is Running | `kubectl get pods -n ingress-nginx` | 1/1 Running |
@@ -343,7 +368,7 @@ cat ~/phase0-day1-evidence.txt
 | 6 | Ingress shows Address | `kubectl get ingress` | ADDRESS = EC2 IP |
 | 7 | curl returns 200 from container | `curl http://api.yourname.mooo.com` | Response text from http-echo |
 
-**All 7 checks pass = Day 1 complete. ✅**
+#### All 7 checks pass = Day 1 complete. ✅
 
 ---
 
@@ -359,7 +384,7 @@ After Day 1, you can explain:
 ### EKS Mapping
 
 | What you did manually | What EKS does instead |
-|----------------------|----------------------|
+| ---------------------- | ---------------------- |
 | Installed Nginx Ingress Controller via Helm | AWS Load Balancer Controller provisions an ALB |
 | Registered a FreeDNS A record manually | ExternalDNS creates Route 53 records from Ingress annotations |
 | Used `hostNetwork: true` to bind port 80 | ALB handles external traffic — no host binding needed |
@@ -369,10 +394,10 @@ After Day 1, you can explain:
 
 ## Day 2: cert-manager + Let's Encrypt HTTPS
 
-*(To be completed on Day 2)*
+<!-- *(To be completed on Day 2)* -->
 
 ---
 
 ## Day 3: IP Restriction + Decommission Pattern
 
-*(To be completed on Day 3)*
+<!-- *(To be completed on Day 3)* -->

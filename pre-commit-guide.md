@@ -2,14 +2,15 @@
 
 ## Philosophy
 
-Every bug caught before `git push` is a bug that never reaches CI, never blocks a teammate, and never touches production. This pre-commit framework enforces security, correctness, and consistency across every technology in the stack.
+Every bug caught before `git push` is a bug that never reaches CI, never blocks a teammate, and
+never touches production. This pre-commit framework enforces security, correctness, and consistency across every technology in the stack.
 
 ---
 
 ## Coverage Matrix
 
 | Stack Layer | Tool | What It Catches |
-|-------------|------|----------------|
+| ------------- | ------ | ---------------- |
 | **Secrets** | Gitleaks | AWS keys, tokens, passwords, private keys committed to Git |
 | **Secrets** | detect-secrets | Baseline-aware secret detection (fewer false positives over time) |
 | **Terraform** | terraform_fmt | Inconsistent formatting → merge conflicts |
@@ -120,12 +121,14 @@ git commit --no-verify -m "hotfix: emergency patch (hooks bypassed)"
 ### 1. Secrets Never Reach Git
 
 Two layers of secret detection:
+
 - **Gitleaks**: Pattern-based detection (AWS keys, GCP credentials, generic tokens)
 - **detect-secrets**: Entropy-based detection with a baseline file that reduces false positives over time
 
 ### 2. Terraform Security Scanning
 
 Three complementary tools:
+
 - **tfsec**: Fast, focused on AWS security misconfigurations
 - **Checkov**: Policy-as-code with CIS benchmark coverage
 - **TFLint**: Catches valid-but-wrong configs (e.g., invalid instance types)
@@ -133,6 +136,7 @@ Three complementary tools:
 ### 3. Kubernetes Security Posture
 
 KubeLinter catches the exact issues that caused Cavendish's incidents:
+
 - Pods running as root → Pod Security Standards violation
 - Missing NetworkPolicy → flat networking (the pen test finding)
 - No resource limits → noisy neighbour, OOM kills

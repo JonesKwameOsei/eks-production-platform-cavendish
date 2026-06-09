@@ -4,7 +4,7 @@
 
 ## Changes
 
-- 
+-
 
 ## Type of Change
 
