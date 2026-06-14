@@ -35,8 +35,18 @@ jobs:
       - name: Initialize TFLint plugins
         run: |
           if [ -d "terraform" ]; then
-            cd terraform && tflint --init || true
+            cd terraform
+            tflint --init || true
           fi
+        shell: bash
+
+      - name: Initialize detect-secrets baseline
+        run: |
+          pip install detect-secrets
+          if [ ! -f ".secrets.baseline" ]; then
+            detect-secrets scan > .secrets.baseline
+          fi
+        shell: bash
 
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1

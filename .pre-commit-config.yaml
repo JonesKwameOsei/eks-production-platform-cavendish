@@ -28,7 +28,7 @@ repos:
       - id: detect-secrets
         name: "🔐 Detect-Secrets — Baseline secret scanning"
         args: ["--baseline", ".secrets.baseline"]
-        exclude: "package-lock.json|.secrets.baseline"
+        exclude: "package-lock.json"
 
   # ===========================================================================
   # 2. TERRAFORM — IaC validation, formatting, security scanning

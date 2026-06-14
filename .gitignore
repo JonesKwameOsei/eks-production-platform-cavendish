@@ -28,7 +28,6 @@ terraform.rc
 .env.*
 *.env
 secrets/
-.secrets.baseline
 
 # Python
 __pycache__/

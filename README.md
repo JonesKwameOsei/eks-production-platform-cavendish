@@ -1,23 +1,46 @@
 # eks-production-platform-cavendish
 
-**Production-Grade EKS Platform Engineering with Terraform, GitOps, and Observability**
+## Production-Grade EKS Platform Engineering with Terraform, GitOps, and Observability
 
-A fully auditable, security-hardened AWS EKS platform built for Cavendish Analytics — an 85-person fintech firm serving twelve institutional clients with near-real-time portfolio analytics. This project addresses six production incidents traced to structural infrastructure gaps and delivers a platform that a real engineering team could inherit, operate, and hand to a Series B due diligence auditor.
+A fully auditable, security-hardened AWS EKS platform built for Cavendish Analytics —
+an 85-person fintech firm serving twelve institutional clients with near-real-time
+portfolio analytics. This project addresses six production incidents traced to structural
+infrastructure gaps and delivers a platform that a real engineering team could inherit,
+operate, and hand to a Series B due diligence auditor.
 
 ---
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
-- [Architecture](#architecture)
-- [Shift-Left Security Strategy](#shift-left-security-strategy)
-- [Technology Stack](#technology-stack)
-- [Repository Structure](#repository-structure)
-- [Phase 0 — Reverse Proxy Foundations](#phase-0--reverse-proxy-foundations)
-- [Deliverables](#deliverables)
-- [Getting Started](#getting-started)
-- [Pre-Commit Setup](#pre-commit-setup)
-- [Documentation](#documentation)
+- [eks-production-platform-cavendish](#eks-production-platform-cavendish)
+  - [Production-Grade EKS Platform Engineering with Terraform, GitOps, and Observability](#production-grade-eks-platform-engineering-with-terraform-gitops-and-observability)
+  - [Table of Contents](#table-of-contents)
+  - [Project Overview](#project-overview)
+    - [The Problem](#the-problem)
+    - [The Solution](#the-solution)
+  - [Architecture](#architecture)
+    - [Key Architecture Decisions](#key-architecture-decisions)
+  - [Shift-Left Security Strategy](#shift-left-security-strategy)
+    - [Why Shift-Left?](#why-shift-left)
+    - [Pre-Commit Security Layers](#pre-commit-security-layers)
+    - [Security Coverage by Cavendish Incident](#security-coverage-by-cavendish-incident)
+    - [Tools in the Framework](#tools-in-the-framework)
+  - [Technology Stack](#technology-stack)
+  - [Repository Structure](#repository-structure)
+  - [Phase 0 — Reverse Proxy Foundations](#phase-0--reverse-proxy-foundations)
+  - [Deliverables](#deliverables)
+  - [Branch Protection \& Contribution Strategy](#branch-protection--contribution-strategy)
+    - [Branch Model](#branch-model)
+    - [Enforcement Layers](#enforcement-layers)
+    - [Pre-Commit Enforcement](#pre-commit-enforcement)
+    - [How Contributors Onboard](#how-contributors-onboard)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Pre-Commit Setup](#pre-commit-setup)
+    - [Infrastructure Deployment](#infrastructure-deployment)
+    - [Environment Promotion Strategy](#environment-promotion-strategy)
+  - [Documentation](#documentation)
+  - [License](#license)
 
 ---
 
@@ -28,7 +51,7 @@ A fully auditable, security-hardened AWS EKS platform built for Cavendish Analyt
 Cavendish Analytics grew from two engineers to fourteen in under three years. The infrastructure accumulated debt silently — until six incidents in eighteen months exposed a pattern:
 
 | Incident | Root Cause |
-|----------|-----------|
+| ---------- | ----------- |
 | IAM access key with S3FullAccess committed to Git, undetected for 4 months | No IRSA — hardcoded AWS credentials |
 | EKS cluster config lost when engineer left; 3-day rebuild | No Terraform — console-provisioned cluster |
 | Staging had 2 replicas, production had 1; discovered during outage | No Helm — 47 YAML files per environment |
@@ -42,7 +65,9 @@ A complete platform re-architecture addressing every root cause:
 
 - **Infrastructure as Code** — Every AWS resource provisioned via Terraform. State locked in S3/DynamoDB. Zero console-created resources.
 - **Credential Elimination** — IRSA for all AWS access. No IAM users, no access keys, no secrets in Git.
-- **Environment Parity** — Single Helm chart with per-environment values. ArgoCD ApplicationSet deploys to staging, UAT, and production from one template. Three environments mirror real-world promotion: staging (dev integration) → UAT (client acceptance) → production (live traffic).
+- **Environment Parity** — Single Helm chart with per-environment values. ArgoCD ApplicationSet
+  deploys to staging, UAT, and production from one template. Three environments mirror real-world
+  promotion: staging (dev integration) → UAT (client acceptance) → production (live traffic).
 - **Observability Before Incidents** — kube-prometheus-stack with postgres-exporter, four-panel Grafana dashboard, PrometheusRule alerting.
 - **Tested Disaster Recovery** — Velero backup to S3 + pg_dump CronJob every 6 hours. Full namespace restore tested and timed.
 - **Network Segmentation** — Default-deny NetworkPolicy with explicit allow rules per communication path.
@@ -51,7 +76,7 @@ A complete platform re-architecture addressing every root cause:
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            AWS Cloud (eu-west-2)                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -119,7 +144,7 @@ A complete platform re-architecture addressing every root cause:
 ### Key Architecture Decisions
 
 | Decision | Rationale |
-|----------|-----------|
+| ---------- | ----------- |
 | IRSA over instance profiles | Pod-level least privilege. Blast radius of a compromised Pod limited to one role. |
 | ALB + ACM over Nginx + cert-manager | AWS-native TLS lifecycle. No certificate secrets in-cluster. Automatic renewal. |
 | ArgoCD ApplicationSet over multiple helm install | Single template generates N environments. Adding UAT was one line in the generators list. |
@@ -137,6 +162,7 @@ Security is not a gate at the end of the pipeline — it is embedded at every st
 ### Why Shift-Left?
 
 Cavendish's original architecture failed because security was an afterthought:
+
 - An IAM key lived in Git for 4 months because no scanner existed
 - A flat network allowed lateral movement because no one reviewed Pod communication paths
 - No one validated Terraform before apply because there was no Terraform
@@ -145,7 +171,7 @@ This project inverts that model. **Every commit is validated before it reaches t
 
 ### Pre-Commit Security Layers
 
-```
+```text
 Developer writes code
         │
         ▼
@@ -186,7 +212,7 @@ Developer writes code
 ### Security Coverage by Cavendish Incident
 
 | Original Incident | Shift-Left Prevention |
-|-------------------|----------------------|
+| ------------------- | ---------------------- |
 | IAM key committed to Git | **Gitleaks** blocks the commit. **detect-secrets** catches entropy-based patterns. |
 | Console-provisioned cluster | **terraform_validate** + **tfsec** ensures all infra is code-reviewed and secure. |
 | YAML drift between environments | **helm lint** + **helm template** validates all three environments render correctly. |
@@ -197,7 +223,7 @@ Developer writes code
 ### Tools in the Framework
 
 | Category | Tool | Purpose |
-|----------|------|---------|
+| ---------- | ------ | --------- |
 | Secrets | [Gitleaks](https://github.com/gitleaks/gitleaks) | Pattern-based secret detection (AWS keys, tokens, passwords) |
 | Secrets | [detect-secrets](https://github.com/Yelp/detect-secrets) | Entropy-based detection with baseline to reduce false positives |
 | Terraform | [terraform fmt/validate](https://www.terraform.io/) | Formatting consistency + syntax validation |
@@ -218,7 +244,7 @@ Developer writes code
 ## Technology Stack
 
 | Layer | Technology | Purpose |
-|-------|-----------|---------|
+| ------- | ----------- | --------- |
 | Cloud | AWS (EKS, ECR, S3, Route 53, ACM, Secrets Manager) | Managed Kubernetes + supporting services |
 | IaC | Terraform + AWS Provider | Declarative infrastructure, state in S3 |
 | Container Orchestration | EKS (Kubernetes 1.29+) | Production control plane |
@@ -245,7 +271,7 @@ Developer writes code
 
 ## Repository Structure
 
-```
+```text
 eks-production-platform-cavendish/
 ├── app/                              # FastAPI Analytics API
 ├── chart/
@@ -304,7 +330,7 @@ eks-production-platform-cavendish/
 Before touching EKS, three days are spent building the reverse proxy and TLS stack manually on k3s. This is not a warm-up — it is the foundation that makes every EKS automation explainable.
 
 | Phase 0 (Manual) | EKS Equivalent (Automated) | What You Learn |
-|------------------|---------------------------|----------------|
+| ------------------ | --------------------------- | ---------------- |
 | Nginx Ingress Controller | AWS Load Balancer Controller + ALB | What an Ingress controller actually does |
 | FreeDNS A record | ExternalDNS + Route 53 | DNS must point to your load balancer |
 | cert-manager + ClusterIssuer | AWS Certificate Manager (ACM) | ACME protocol and TLS lifecycle |
@@ -320,7 +346,7 @@ Before touching EKS, three days are spent building the reverse proxy and TLS sta
 Seventeen verifiable deliverables — three from Phase 0, fourteen from the EKS platform:
 
 | Ref | Deliverable | Verification |
-|-----|------------|--------------|
+| ----- | ------------ | -------------- |
 | P0-D1 | Nginx Ingress HTTP routing | `curl` returns 200 from inside cluster |
 | P0-D2 | HTTPS via cert-manager | Certificate Ready: True, no warning |
 | P0-D3 | IP restriction + decommission | 403 from blocked IP, 404 on delete, 200 on restore |
@@ -338,6 +364,82 @@ Seventeen verifiable deliverables — three from Phase 0, fourteen from the EKS 
 | D12 | Disaster recovery tested | Namespace deleted → restored → data verified |
 | D13 | RBAC — no default SA | Every Pod has named ServiceAccount + Role |
 | D14 | Pod Security Standards | Privileged Pod rejected by admission controller |
+
+---
+
+## Branch Protection & Contribution Strategy
+
+### Branch Model
+
+`main` is protected. All changes go through pull requests — no exceptions.
+
+```text
+main (protected — admin bypass only)
+  │
+  ├── feature/terraform-vpc         ← new functionality
+  ├── fix/ingress-annotation         ← bug fix
+  ├── docs/runbook-day2              ← documentation
+  ├── chore/update-dependencies      ← maintenance
+  └── ci/add-trivy-scan              ← pipeline changes
+```
+
+### Enforcement Layers
+
+| Layer | What It Enforces | Bypass |
+| ------- | ----------------- | -------- |
+| **Branch ruleset** | No direct push to main, require PR, block force push | Admin only |
+| **PR label check** (CI) | Every PR must have `type:` + `priority:` labels | None — blocks merge |
+| **Pre-commit hooks** (CI) | Linting, security scanning, formatting across all stacks | None — blocks merge |
+| **CODEOWNERS** | Auto-assigns reviewers, requires owner approval for sensitive files | None |
+| **Signed commits** | Proves authorship — important for fintech audit trail | None |
+
+### Pre-Commit Enforcement
+
+Pre-commit hooks run at two levels:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  LOCAL (developer machine)                                   │
+│  pre-commit install → hooks run on every git commit          │
+│  ⚡ Fast feedback — catches issues in seconds               │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               │ git push → open PR
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│  CI (GitHub Actions)                                         │
+│  pre-commit run --all-files → same hooks run in pipeline     │
+│  🔒 Enforcement gate — blocks merge if any check fails      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Can a contributor skip local hooks?** Yes — `git commit --no-verify` bypasses local hooks.
+But it doesn't matter because CI runs the identical checks. If a contributor skips hooks
+locally, CI will catch it and **block the merge**. There's no way around it.
+
+This is the real-world pattern: local hooks are a *convenience* (fast feedback), CI is the *enforcement* (merge gate).
+
+### How Contributors Onboard
+
+```bash
+# 1. Clone
+git clone git@github.com:joneskwameosei/eks-production-platform-cavendish.git
+
+# 2. Install pre-commit hooks (required — CI will reject PRs without passing checks)
+pip install pre-commit
+pre-commit install
+pre-commit install --hook-type commit-msg
+
+# 3. Branch, code, commit, push, PR
+git checkout -b feature/my-change
+# ... make changes ...
+git add .
+git commit -m "feat(terraform): add S3 bucket for backups"
+git push -u origin feature/my-change
+# Open PR → add labels → request review → merge
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide.
 
 ---
 
@@ -388,7 +490,7 @@ kubectl apply -f argocd/applicationset.yaml
 
 ### Environment Promotion Strategy
 
-```
+```text
 ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
 │   STAGING    │─────▶│     UAT      │─────▶│  PRODUCTION  │
 │              │      │              │      │              │
@@ -409,12 +511,13 @@ Namespaces:
 ## Documentation
 
 | Document | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | [Architecture](docs/architecture.md) | Detailed architecture decisions and diagrams |
 | [Cost Guide](docs/cost-guide.md) | AWS resource cost breakdown and optimization |
 | [DR Results](docs/dr-results.md) | Disaster recovery test results and RTO |
 | [Runbook](docs/runbook.md) | Operational procedures for common scenarios |
 | [Pre-Commit Guide](pre-commit-guide.md) | Detailed pre-commit framework documentation |
+| [Contributing](CONTRIBUTING.md) | Branch workflow, commit conventions, PR labels, review standards |
 
 ---
 
