@@ -50,7 +50,7 @@ All branches must follow this pattern:
 ```
 
 | Type | Purpose | Example |
-|------|---------|---------|
+| ------ | --------- | --------- |
 | `feature/` | New functionality | `feature/helm-networkpolicy` |
 | `fix/` | Bug fixes | `fix/ingress-403-error` |
 | `docs/` | Documentation only | `docs/runbook-day2` |
@@ -75,7 +75,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/). The pre-com
 ### Types
 
 | Type | When |
-|------|------|
+| ------ | ------ |
 | `feat` | New feature |
 | `fix` | Bug fix |
 | `docs` | Documentation changes |
@@ -137,7 +137,7 @@ Every PR **must** have at least one type label and one priority label before mer
 #### Type Labels
 
 | Label | Color | Description |
-|-------|-------|-------------|
+| ------- | ------- | ------------- |
 | `type: feature` | `#0E8A16` | New functionality |
 | `type: fix` | `#D93F0B` | Bug fix |
 | `type: docs` | `#0075CA` | Documentation |
@@ -149,7 +149,7 @@ Every PR **must** have at least one type label and one priority label before mer
 #### Priority Labels
 
 | Label | Color | Description |
-|-------|-------|-------------|
+| ------- | ------- | ------------- |
 | `priority: critical` | `#B60205` | Blocks production |
 | `priority: high` | `#D93F0B` | Needed this sprint |
 | `priority: medium` | `#FBCA04` | Planned work |
@@ -158,7 +158,7 @@ Every PR **must** have at least one type label and one priority label before mer
 #### Scope Labels
 
 | Label | Color | Description |
-|-------|-------|-------------|
+| ------- | ------- | ------------- |
 | `scope: terraform` | `#5319E7` | Infrastructure as code |
 | `scope: helm` | `#006B75` | Helm chart changes |
 | `scope: app` | `#1D76DB` | Application code |
@@ -241,7 +241,7 @@ This runs on every PR open/label change and blocks merge until labels are correc
 ### What Reviewers Check
 
 | Area | What to verify |
-|------|---------------|
+| ------ | --------------- |
 | Security | No secrets, IRSA used correctly, NetworkPolicy coverage |
 | Terraform | `terraform plan` output makes sense, no `0.0.0.0/0` without justification |
 | Helm | Templates render for all 3 environments, values are parameterized |

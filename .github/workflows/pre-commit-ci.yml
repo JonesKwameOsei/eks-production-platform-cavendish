@@ -38,6 +38,7 @@ jobs:
             cd terraform
             tflint --init || true
           fi
+        shell: bash
 
       - name: Initialize detect-secrets baseline
         run: |
@@ -45,6 +46,7 @@ jobs:
           if [ ! -f ".secrets.baseline" ]; then
             detect-secrets scan > .secrets.baseline
           fi
+        shell: bash
 
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.1
