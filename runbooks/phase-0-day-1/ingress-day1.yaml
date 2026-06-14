@@ -1,30 +1,22 @@
+# Phase 0 Day 1 — Ingress manifest (cleaned for version control)
+# Runtime fields (uid, resourceVersion, status, last-applied-configuration) removed.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  annotations:
-    kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"nginx.ingress.kubernetes.io/rewrite-target":"/"},"name":"http-echo-ingress","namespace":"default"},"spec":{"ingressClassName":"nginx","rules":[{"host":"api.cavendish.chickenkiller.com","http":{"paths":[{"backend":{"service":{"name":"http-echo","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}]}}
-    nginx.ingress.kubernetes.io/rewrite-target: /
-  creationTimestamp: "2026-06-14T07:54:58Z"
-  generation: 1
   name: http-echo-ingress
   namespace: default
-  resourceVersion: "4115"
-  uid: 020aeb31-f2d9-4762-b9fc-40a486b69a66
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-  - host: api.cavendish.chickenkiller.com
-    http:
-      paths:
-      - backend:
-          service:
-            name: http-echo
-            port:
-              number: 80
-        path: /
-        pathType: Prefix
-status:
-  loadBalancer:
-    ingress:
-    - ip: 10.43.155.42
+    - host: api.<your-subdomain>.chickenkiller.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: http-echo
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix

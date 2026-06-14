@@ -2,50 +2,41 @@
 Timestamp: 2026-06-14 08:33:37 UTC
 
 --- curl output ---
-  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
-                                 Dload  Upload  Total   Spent   Left   Speed
-  0      0   0      0   0      0      0      0                              0* Host api.cavendish.chickenkiller.com:80 was resolved.
-* IPv6: (none)
-* IPv4: 18.175.201.77
-*   Trying 18.175.201.77:80...
-* Established connection to api.cavendish.chickenkiller.com (18.175.201.77 port 80) from 172.31.34.21 port 39356
-* using HTTP/1.x
+* Host api.<your-subdomain>.chickenkiller.com:80 was resolved.
+* IPv4: <EC2_PUBLIC_IP>
+*   Trying <EC2_PUBLIC_IP>:80...
+* Established connection from <PRIVATE_IP> port 39356
 > GET / HTTP/1.1
-> Host: api.cavendish.chickenkiller.com
+> Host: api.<your-subdomain>.chickenkiller.com
 > User-Agent: curl/8.18.0
 > Accept: */*
 >
-* Request completely sent off
 < HTTP/1.1 200 OK
 < Date: Sun, 14 Jun 2026 08:33:38 GMT
 < Content-Type: text/plain; charset=utf-8
 < Content-Length: 37
-< Connection: keep-alive
 < X-App-Name: http-echo
 < X-App-Version: 1.0.0
 <
-{ [37 bytes data]
-100     37 100     37   0      0   7229      0                              0
-* Connection #0 to host api.cavendish.chickenkiller.com:80 left intact
 Phase 0 - Day 1: Ingress is working!
 
 --- kubectl get ingress ---
-NAME                CLASS   HOSTS                             ADDRESS        PORTS   AGE
-http-echo-ingress   nginx   api.cavendish.chickenkiller.com   10.43.155.42   80      38m
+NAME                CLASS   HOSTS                                      ADDRESS         PORTS   AGE
+http-echo-ingress   nginx   api.<your-subdomain>.chickenkiller.com     10.xx.xxx.xx    80      38m
 
 --- kubectl describe ingress ---
 Name:             http-echo-ingress
 Labels:           <none>
 Namespace:        default
-Address:          10.43.155.42
+Address:          10.xx.xxx.xx
 Ingress Class:    nginx
 Default backend:  <default>
 Rules:
-  Host                             Path  Backends
-  ----                             ----  --------
-  api.cavendish.chickenkiller.com
-                                   /   http-echo:80 (10.42.0.10:5678)
-Annotations:                       nginx.ingress.kubernetes.io/rewrite-target: /
+  Host                                      Path  Backends
+  ----                                      ----  --------
+  api.<your-subdomain>.chickenkiller.com
+                                            /   http-echo:80 (10.42.x.x:5678)
+Annotations:                                nginx.ingress.kubernetes.io/rewrite-target: /
 Events:
   Type    Reason  Age                From                      Message
   ----    ------  ----               ----                      -------
