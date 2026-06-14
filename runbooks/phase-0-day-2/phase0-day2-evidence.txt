@@ -1,0 +1,23 @@
+=== P0-D2 Verification ===
+Timestamp: 2026-06-14 12:03:19 UTC
+
+--- kubectl get certificate ---
+NAME            READY   SECRET          AGE
+http-echo-tls   True    http-echo-tls   61m
+
+--- curl -I https ---
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0     37   0      0   0      0      0      0                              0
+HTTP/2 200
+date: Sun, 14 Jun 2026 12:03:20 GMT
+content-type: text/plain; charset=utf-8
+content-length: 37
+x-app-name: http-echo
+x-app-version: 1.0.0
+strict-transport-security: max-age=31536000; includeSubDomains
+
+
+--- kubectl get secret ---
+NAME            TYPE                DATA   AGE
+http-echo-tls   kubernetes.io/tls   2      60m
