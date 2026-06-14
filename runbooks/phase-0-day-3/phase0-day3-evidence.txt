@@ -1,0 +1,44 @@
+=== P0-D3 Verification ===
+Timestamp: 2026-06-14 13:38:23 UTC
+
+--- IP Restriction: Allowed IP (200) ---
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0     37   0      0   0      0      0      0                              0
+HTTP/2 200
+date: Sun, 14 Jun 2026 13:38:23 GMT
+content-type: text/plain; charset=utf-8
+content-length: 37
+x-app-name: http-echo
+x-app-version: 1.0.0
+strict-transport-security: max-age=31536000; includeSubDomains
+
+
+--- Decommission: Delete Ingress ---
+ingress.networking.k8s.io "http-echo-ingress" deleted from default namespace
+
+--- Decommission: Confirm 404 ---
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0    146   0      0   0      0      0      0                              0
+HTTP/2 404
+date: Sun, 14 Jun 2026 13:38:26 GMT
+content-type: text/html
+content-length: 146
+strict-transport-security: max-age=31536000; includeSubDomains
+
+
+--- Restore: Re-apply Ingress ---
+ingress.networking.k8s.io/http-echo-ingress created
+
+--- Restore: Confirm 200 ---
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0     37   0      0   0      0      0      0                              0
+HTTP/2 200
+date: Sun, 14 Jun 2026 13:38:29 GMT
+content-type: text/plain; charset=utf-8
+content-length: 37
+x-app-name: http-echo
+x-app-version: 1.0.0
+strict-transport-security: max-age=31536000; includeSubDomains
